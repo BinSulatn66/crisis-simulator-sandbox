@@ -177,7 +177,7 @@
 
                             <div class="pt-4 border-t border-white/5">
                                 <button id="generate-ai-btn" onclick="window.executeStrategicAnalysis()" class="w-full bg-slate-900 border-2 border-emerald-500/50 hover:border-emerald-400 text-emerald-400 hover:text-white hover:bg-emerald-600 py-4 rounded-2xl text-xs font-black transition-all shadow-[0_0_20px_rgba(16,185,129,0.15)] flex items-center justify-center gap-3">
-                                    <i class="fas fa-brain"></i> تشغيل التحليل الاستراتيجي (McKinsey-Grade)
+                                    <i class="fas fa-brain"></i> تشغيل التحليل الاستراتيجي (Gemini 1.5 Flash)
                                 </button>
                             </div>
                         </div>
@@ -192,14 +192,14 @@
                                 <i class="fas fa-file-contract"></i> وحدة التقارير الاستراتيجية المعمقة
                             </h3>
                             <div id="ai-status" class="hidden flex items-center gap-2 text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-3 py-1 rounded-full">
-                                <i class="fas fa-circle-notch fa-spin"></i> جاري توليد التقرير المعمق...
+                                <i class="fas fa-circle-notch fa-spin"></i> جاري توليد التتقرير المعمق عبر Gemini AI...
                             </div>
                         </div>
                         
                         <div id="report-content" class="text-sm leading-relaxed text-slate-300 font-medium space-y-8 overflow-y-auto max-h-[500px] pr-2">
                             <div class="flex flex-col items-center justify-center h-full text-center py-20 opacity-30">
                                 <i class="fas fa-microchip text-6xl mb-6"></i>
-                                <p class="text-sm font-bold uppercase tracking-[0.2em]">بانتظار تحديد البارامترات لبدء النمذجة الرياضية</p>
+                                <p class="text-sm font-bold uppercase tracking-[0.2em]">بانتظار تحديد البارامترات لبدء النمذجة الذكية</p>
                             </div>
                         </div>
                     </div>
@@ -326,17 +326,6 @@
                 ]
             };
 
-            var visionPrograms = [
-                "برنامج تطوير الصناعة الوطنية والخدمات اللوجستية (NIDLP)",
-                "برنامج صندوق الاستثمارات العامة (PIF)",
-                "برنامج الاستدامة المالية",
-                "برنامج تحول القطاع الصحي",
-                "برنامج الإسكان",
-                "برنامج خدمة ضيوف الرحمن",
-                "برنامج جودة الحياة",
-                "برنامج تنمية القدرات البشرية"
-            ];
-
             function getEl(id) { return document.getElementById(id); }
 
             window.updateEntityList = function() {
@@ -363,7 +352,6 @@
                 
                 getEl('capex-val').innerText = capex + "%";
 
-                // Golden Metrics Logic
                 var impactRed = (capex * 0.4).toFixed(1);
                 var readiness = (60 + (capex * 0.3)).toFixed(1);
                 var lossPrev = (15 + (capex * 0.2)).toFixed(1);
@@ -378,14 +366,10 @@
                 getEl('cashflow-val').innerText = cashflow + "%";
                 getEl('cashflow-fill').style.width = cashflow + "%";
 
-                // Mathematical Modeling
-                // RAROR = (Crisis Impact * (1 - Hedge Level)) / Sovereign Buffer
-                // Simplified for simulation: Crisis Impact assumed 100, Buffer assumed 50
                 var hedge = capex / 100;
                 var raror = (100 * (1 - hedge)) / 50;
                 getEl('raror-val').innerText = raror.toFixed(2);
 
-                // SRB = (CapEx Redirection * Readiness) / Sector Risk
                 var srb = (capex * (readiness / 100)) / risk;
                 getEl('srb-val').innerText = srb.toFixed(2);
             };
@@ -402,51 +386,31 @@
                 status.classList.remove('hidden');
                 content.innerHTML = "<div class='flex items-center justify-center py-20'><i class='fas fa-circle-notch fa-spin text-4xl text-emerald-500'></i></div>";
 
-                setTimeout(function() {
-                    status.classList.add('hidden');
-                    var report = "";
-                    
-                    // Section 1: Executive Assessment
-                    report += "<div class='space-y-4 border-b border-white/5 pb-8'>";
-                    report += "<h4 class='text-emerald-400 font-black text-lg flex items-center gap-3'><i class='fas fa-briefcase'></i> 1. التقييم التنفيذي الاستراتيجي (Executive Assessment)</h4>";
-                    report += "<p class='text-slate-300 leading-relaxed text-xs'>بناءً على النمذجة المتقدمة لكيان <span class='text-white font-bold'>" + entity + "</span>، نخلص إلى أن التعرض الحالي لأزمة <span class='text-white font-bold'>" + crisis + "</span> يتطلب استجابة فورية وحاسمة. إن استراتيجية التحوط الاستثماري (CapEx Hedging) المقترحة بنسبة <span class='text-gold-accent font-bold'>" + capex + "%</span> تمثل الخط الدفاعي الأول لضمان استمرارية الأعمال وحماية الميزانية العمومية من التآكل الناتج عن الصدمات الخارجية.</p>";
-                    report += "<p class='text-slate-300 leading-relaxed text-xs'>تعتبر هذه النسبة كافية لإعادة توجيه التدفقات النقدية نحو الأصول الأكثر مرونة، مما يقلل الاعتماد على الديون قصيرة الأجل ويحافظ على تصنيف الائتمان السيادي للجهة في ظل ظروف السوق المتقلبة.</p>";
-                    report += "</div>";
-
-                    // Section 2: Mathematical Modeling
-                    report += "<div class='space-y-4 border-b border-white/5 pb-8'>";
-                    report += "<h4 class='text-emerald-400 font-black text-lg flex items-center gap-3'><i class='fas fa-square-root-variable'></i> 2. النمذجة الرياضية وتحليل البيانات (RAROR & SRB Modeling)</h4>";
-                    report += "<div class='grid grid-cols-1 md:grid-cols-2 gap-4 my-6'>";
-                    report += "<div class='bg-slate-900/80 p-4 rounded-2xl border border-emerald-500/20'><p class='text-[10px] text-slate-500 uppercase font-black mb-1'>RAROR Score</p><p class='text-2xl font-black text-emerald-400'>" + raror + "</p><p class='text-[9px] text-slate-400 mt-2'>العائد المعدل حسب المخاطر على الصمود الاستراتيجي.</p></div>";
-                    report += "<div class='bg-slate-900/80 p-4 rounded-2xl border border-gold-accent/20'><p class='text-[10px] text-slate-500 uppercase font-black mb-1'>SRB Buffer</p><p class='text-2xl font-black text-gold-accent'>" + srb + "</p><p class='text-[9px] text-slate-400 mt-2'>مخزون الصمود السيادي المتاح للجهة.</p></div>";
-                    report += "</div>";
-                    report += "<p class='text-slate-300 leading-relaxed text-xs'>تشير قيمة RAROR البالغة <span class='text-white'>" + raror + "</span> إلى كفاءة عالية في تحويل استثمارات الصمود إلى قيمة مضافة حقيقية. من خلال معادلة SRB، يتبين أن الجهة تمتلك هامش أمان سيادي يتناسب طردياً مع مستوى جاهزية الأفراد والأنظمة التقنية المطبقة حالياً.</p>";
-                    report += "</div>";
-
-                    // Section 3: Response Architecture
-                    report += "<div class='space-y-4 border-b border-white/5 pb-8'>";
-                    report += "<h4 class='text-emerald-400 font-black text-lg flex items-center gap-3'><i class='fas fa-layer-group'></i> 3. هيكلية الاستجابة عبر الآفاق الزمنية (Horizons 1/2/3)</h4>";
-                    report += "<div class='space-y-6'>";
-                    report += "<div><h5 class='text-[11px] font-black text-red-400 mb-2'>الأفق الأول: الاحتواء الفوري (0-30 يوم)</h5><p class='text-xs text-slate-400'>عزل الميزانيات غير الأساسية وتجميد الإنفاق التوسعي في المناطق الجغرافية المتأثرة بالأزمة، مع تفعيل بروتوكول الصمود النقدي الفوري.</p></div>";
-                    report += "<div><h5 class='text-[11px] font-black text-yellow-400 mb-2'>الأفق الثاني: التكيف الهيكلي (1-6 أشهر)</h5><p class='text-xs text-slate-400'>إعادة تشكيل سلاسل الإمداد والاعتماد على الموردين المحليين المعتمدين ضمن برنامج 'ندلب'، وتوطين التقنيات الحرجة لضمان استقلالية القرار.</p></div>";
-                    report += "<div><h5 class='text-[11px] font-black text-emerald-400 mb-2'>الأفق الثالث: السيادة الاستراتيجية (6 أشهر +)</h5><p class='text-xs text-slate-400'>تحويل الأزمة إلى فرصة لامتلاك أصول استراتيجية عالمية بأسعار مخفضة، وتعزيز المكانة القيادية للمملكة في القطاع المستهدف.</p></div>";
-                    report += "</div>";
-                    report += "</div>";
-
-                    // Section 4: Vision 2030 Mapping
-                    report += "<div class='space-y-4 pb-8'>";
-                    report += "<h4 class='text-emerald-400 font-black text-lg flex items-center gap-3'><i class='fas fa-crown'></i> 4. الموائمة مع برامج رؤية المملكة 2030 (Strategic Mapping)</h4>";
-                    report += "<p class='text-slate-300 leading-relaxed text-xs'>تتوافق هذه التوصيات بشكل مباشر مع الأهداف الاستراتيجية لبرامج الرؤية، وتحديداً:</p>";
-                    report += "<ul class='grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-400 list-inside list-disc'>";
-                    visionPrograms.forEach(function(prog) {
-                        report += "<li>" + prog + "</li>";
-                    });
-                    report += "</ul>";
-                    report += "<p class='text-slate-300 leading-relaxed text-xs mt-4'>إن ضمان استمرارية هذه البرامج في ظل الأزمات هو حجر الزاوية في استراتيجية الصمود الوطنية، وتعتبر شركة <span class='text-white'>" + entity + "</span> ممكناً رئيساً لتحقيق هذه المستهدفات العظيمة.</p>";
-                    report += "</div>";
-
-                    content.innerHTML = report;
-                }, 1500);
+                // Secure API Proxy Call
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/api/gemini", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        status.classList.add('hidden');
+                        if (xhr.status === 200) {
+                            var response = JSON.parse(xhr.responseText);
+                            // Simple formatting for AI text (newlines to br)
+                            var formattedReport = response.report.replace(/\n/g, "<br>");
+                            content.innerHTML = "<div class='ai-report-text text-slate-300 text-xs leading-loose'>" + formattedReport + "</div>";
+                        } else {
+                            content.innerHTML = "<div class='text-red-400 font-bold p-4 text-center'>خطأ في الاتصال بنظام الذكاء الاصطناعي. يرجى التحقق من مفتاح API.</div>";
+                        }
+                    }
+                };
+                var payload = JSON.stringify({
+                    entity: entity,
+                    crisis: crisis,
+                    capex: capex,
+                    raror: raror,
+                    srb: srb
+                });
+                xhr.send(payload);
             };
 
             document.addEventListener('DOMContentLoaded', function() {
