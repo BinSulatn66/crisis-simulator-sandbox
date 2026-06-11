@@ -192,7 +192,7 @@
                                 <i class="fas fa-file-contract"></i> وحدة التقارير الاستراتيجية المعمقة
                             </h3>
                             <div id="ai-status" class="hidden flex items-center gap-2 text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-3 py-1 rounded-full">
-                                <i class="fas fa-circle-notch fa-spin"></i> جاري توليد التتقرير المعمق عبر Gemini AI...
+                                <i class="fas fa-circle-notch fa-spin"></i> جاري توليد التقرير المعمق عبر Gemini AI...
                             </div>
                         </div>
                         
@@ -386,31 +386,36 @@
                 status.classList.remove('hidden');
                 content.innerHTML = "<div class='flex items-center justify-center py-20'><i class='fas fa-circle-notch fa-spin text-4xl text-emerald-500'></i></div>";
 
-                // Secure API Proxy Call
-                var xhr = new XMLHttpRequest();
-                xhr.open("POST", "/api/gemini", true);
-                xhr.setRequestHeader("Content-Type", "application/json");
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState === 4) {
-                        status.classList.add('hidden');
-                        if (xhr.status === 200) {
-                            var response = JSON.parse(xhr.responseText);
-                            // Simple formatting for AI text (newlines to br)
-                            var formattedReport = response.report.replace(/\n/g, "<br>");
-                            content.innerHTML = "<div class='ai-report-text text-slate-300 text-xs leading-loose'>" + formattedReport + "</div>";
-                        } else {
-                            content.innerHTML = "<div class='text-red-400 font-bold p-4 text-center'>خطأ في الاتصال بنظام الذكاء الاصطناعي. يرجى التحقق من مفتاح API.</div>";
-                        }
+                // Standard fetch for the API
+                fetch("/api/gemini", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        entity: entity,
+                        crisis: crisis,
+                        capex: capex,
+                        raror: raror,
+                        srb: srb
+                    })
+                })
+                .then(function(res) {
+                    status.classList.add('hidden');
+                    return res.json();
+                })
+                .then(function(response) {
+                    if (response.error) {
+                        content.innerHTML = "<div class='text-red-400 font-bold p-4 text-center'>Error: " + response.error + "</div>";
+                    } else {
+                        var formattedReport = response.report.replace(/\n/g, "<br>");
+                        content.innerHTML = "<div class='ai-report-text text-slate-300 text-xs leading-loose'>" + formattedReport + "</div>";
                     }
-                };
-                var payload = JSON.stringify({
-                    entity: entity,
-                    crisis: crisis,
-                    capex: capex,
-                    raror: raror,
-                    srb: srb
+                })
+                .catch(function(err) {
+                    status.classList.add('hidden');
+                    content.innerHTML = "<div class='text-red-400 font-bold p-4 text-center'>خطأ في الاتصال بنظام الذكاء الاصطناعي. يرجى التحقق من التكوين.</div>";
                 });
-                xhr.send(payload);
             };
 
             document.addEventListener('DOMContentLoaded', function() {
