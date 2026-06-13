@@ -4,15 +4,12 @@ export default async function handler(req, res) {
   }
 
   const { entity, crisis, capex, raror, srb } = req.body;
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROK_API_KEY;
 
   if (!apiKey) {
-    return res.status(500).json({ error: 'Gemini API key not configured on Vercel environment' });
+    return res.status(500).json({ error: 'xAI API key (GROK_API_KEY) not configured on Vercel environment' });
   }
 
-  // Detect AQ-prefixed key (Google Cloud Project key)
-  const isAQKey = apiKey.startsWith('AQ');
-  
   const prompt = "You are a world-class strategic consultant (McKinsey/BCG style). Provide a deep, executive analysis in Arabic for the following scenario:\n" +
                  "Entity: " + entity + "\n" +
                  "Crisis Type: " + crisis + "\n" +
@@ -26,72 +23,39 @@ export default async function handler(req, res) {
                  "4. Vision 2030 Mapping (الموائمة مع برامج رؤية المملكة 2030)\n\n" +
                  "Use professional, authoritative, and sophisticated Arabic terminology.";
 
-  // For AQ keys (GCP), we attempt to use the Vertex AI style endpoint structure or 
-  // ensure the v1beta endpoint with proper headers is used.
-  // Standard AIza keys work with generativelanguage.googleapis.com
-  const endpoints = [
-    { 
-      url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent", 
-      label: "v1beta-flash" 
-    },
-    { 
-      url: "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent", 
-      label: "v1-flash" 
-    }
-  ];
+  try {
+    const response = await fetch("https://api.x.ai/v1/chat/completions", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "grok-2", // Primary choice; change to grok-beta if needed
+        messages: [
+          { role: "system", content: "You are a world-class strategic consultant." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 2048
+      })
+    });
 
-  let lastError = null;
+    const data = await response.json();
 
-  for (const endpoint of endpoints) {
-    try {
-      console.log(`Internal API Key Check: Prefix=${apiKey.substring(0, 3)}... (isAQ=${isAQKey})`);
-      console.log(`Attempting Gemini API (${endpoint.label})...`);
-      
-      const response = await fetch(`${endpoint.url}?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          // If it's a GCP key, sometimes the x-goog-api-key header is more reliable
-          ...(isAQKey ? { 'x-goog-api-key': apiKey } : {})
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2048,
-          }
-        })
-      });
-
-      const responseClone = response.clone();
-      let data;
-      try {
-        data = await response.json();
-      } catch (e) {
-        data = { rawText: await responseClone.text() };
+    if (response.ok) {
+      const text = data.choices?.[0]?.message?.content;
+      if (text) {
+        return res.status(200).json({ report: text });
       }
-
-      if (response.ok) {
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) {
-          console.log(`Success with ${endpoint.label}`);
-          return res.status(200).json({ report: text });
-        }
-      }
-
-      console.warn(`${endpoint.label} failed with status ${response.status}:`, JSON.stringify(data));
-      lastError = { label: endpoint.label, status: response.status, data };
-
-    } catch (err) {
-      console.error(`Runtime error on ${endpoint.label}:`, err.message);
-      lastError = { label: endpoint.label, error: err.message };
     }
+
+    res.status(response.status).json({
+      error: 'xAI API call failed',
+      details: data
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: 'Runtime error', details: err.message });
   }
-
-  // If we reach here, all attempts failed. 
-  // If we have a 403/404 on an AQ key, it likely means the API isn't enabled in the GCP project.
-  res.status(lastError?.status || 500).json({ 
-    error: 'All Gemini API endpoints failed', 
-    details: lastError 
-  });
 }
