@@ -177,7 +177,7 @@
 
                             <div class="pt-4 border-t border-white/5">
                                 <button id="generate-ai-btn" onclick="window.executeStrategicAnalysis()" class="w-full bg-slate-900 border-2 border-emerald-500/50 hover:border-emerald-400 text-emerald-400 hover:text-white hover:bg-emerald-600 py-4 rounded-2xl text-xs font-black transition-all shadow-[0_0_20px_rgba(16,185,129,0.15)] flex items-center justify-center gap-3">
-                                    <i class="fas fa-brain"></i> تشغيل التحليل الاستراتيجي (DeepSeek V3)
+                                    <i class="fas fa-brain"></i> تشغيل التحليل الاستراتيجي (Gemini 1.5 Flash)
                                 </button>
                             </div>
                         </div>
@@ -192,7 +192,7 @@
                                 <i class="fas fa-file-contract"></i> وحدة التقارير الاستراتيجية المعمقة
                             </h3>
                             <div id="ai-status" class="hidden flex items-center gap-2 text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-3 py-1 rounded-full">
-                                <i class="fas fa-circle-notch fa-spin"></i> جاري توليد التقرير المعمق عبر DeepSeek...
+                                <i class="fas fa-circle-notch fa-spin"></i> جاري توليد التقرير المعمق عبر Gemini...
                             </div>
                         </div>
                         
@@ -331,6 +331,7 @@
             window.updateEntityList = function() {
                 var category = getEl('category-select').value;
                 var select = getEl('entity-select');
+                if (!select) return;
                 select.innerHTML = "";
                 if (entities[category]) {
                     entities[category].forEach(function(e) {
@@ -346,42 +347,66 @@
             };
 
             window.updateMetrics = function() {
-                var capex = parseInt(getEl('capex-slider').value);
+                var capexSlider = getEl('capex-slider');
+                if (!capexSlider) return;
+                var capex = parseInt(capexSlider.value);
                 var entitySelect = getEl('entity-select');
-                var risk = entitySelect.options.length > 0 ? parseFloat(entitySelect.options[entitySelect.selectedIndex].getAttribute('data-risk')) : 0.8;
+                var risk = (entitySelect && entitySelect.options.length > 0) ? parseFloat(entitySelect.options[entitySelect.selectedIndex].getAttribute('data-risk')) : 0.8;
                 
-                getEl('capex-val').innerText = capex + "%";
+                var capexVal = getEl('capex-val');
+                if (capexVal) capexVal.innerText = capex + "%";
 
                 var impactRed = (capex * 0.4).toFixed(1);
                 var readiness = (60 + (capex * 0.3)).toFixed(1);
                 var lossPrev = (15 + (capex * 0.2)).toFixed(1);
                 var cashflow = (30 + (capex * 0.2)).toFixed(1);
 
-                getEl('impact-reduction-val').innerText = impactRed + "%";
-                getEl('impact-reduction-fill').style.width = impactRed + "%";
-                getEl('org-readiness-val').innerText = readiness + "%";
-                getEl('org-readiness-fill').style.width = readiness + "%";
-                getEl('loss-prevention-val').innerText = lossPrev + "%";
-                getEl('loss-prevention-fill').style.width = lossPrev + "%";
-                getEl('cashflow-val').innerText = cashflow + "%";
-                getEl('cashflow-fill').style.width = cashflow + "%";
+                var irVal = getEl('impact-reduction-val');
+                var irFill = getEl('impact-reduction-fill');
+                if (irVal) irVal.innerText = impactRed + "%";
+                if (irFill) irFill.style.width = impactRed + "%";
+
+                var orVal = getEl('org-readiness-val');
+                var orFill = getEl('org-readiness-fill');
+                if (orVal) orVal.innerText = readiness + "%";
+                if (orFill) orFill.style.width = readiness + "%";
+
+                var lpVal = getEl('loss-prevention-val');
+                var lpFill = getEl('loss-prevention-fill');
+                if (lpVal) lpVal.innerText = lossPrev + "%";
+                if (lpFill) lpFill.style.width = lossPrev + "%";
+
+                var cfVal = getEl('cashflow-val');
+                var cfFill = getEl('cashflow-fill');
+                if (cfVal) cfVal.innerText = cashflow + "%";
+                if (cfFill) cfFill.style.width = cashflow + "%";
 
                 var hedge = capex / 100;
                 var raror = (100 * (1 - hedge)) / 50;
-                getEl('raror-val').innerText = raror.toFixed(2);
+                var rarorVal = getEl('raror-val');
+                if (rarorVal) rarorVal.innerText = raror.toFixed(2);
 
                 var srb = (capex * (readiness / 100)) / risk;
-                getEl('srb-val').innerText = srb.toFixed(2);
+                var srbVal = getEl('srb-val');
+                if (srbVal) srbVal.innerText = srb.toFixed(2);
             };
 
             window.executeStrategicAnalysis = function() {
                 var content = getEl('report-content');
                 var status = getEl('ai-status');
-                var entity = getEl('entity-select').options[getEl('entity-select').selectedIndex].text;
-                var crisis = getEl('crisis-select').options[getEl('crisis-select').selectedIndex].text;
-                var capex = getEl('capex-slider').value;
-                var raror = getEl('raror-val').innerText;
-                var srb = getEl('srb-val').innerText;
+                var entitySelect = getEl('entity-select');
+                var crisisSelect = getEl('crisis-select');
+                var capexSlider = getEl('capex-slider');
+                var rarorVal = getEl('raror-val');
+                var srbVal = getEl('srb-val');
+
+                if (!content || !status || !entitySelect || !crisisSelect || !capexSlider || !rarorVal || !srbVal) return;
+
+                var entity = entitySelect.options[entitySelect.selectedIndex].text;
+                var crisis = crisisSelect.options[crisisSelect.selectedIndex].text;
+                var capex = capexSlider.value;
+                var raror = rarorVal.innerText;
+                var srb = srbVal.innerText;
 
                 status.classList.remove('hidden');
                 content.innerHTML = "<div class='flex items-center justify-center py-20'><i class='fas fa-circle-notch fa-spin text-4xl text-emerald-500'></i></div>";
@@ -418,10 +443,15 @@
             };
 
             document.addEventListener('DOMContentLoaded', function() {
-                getEl('capex-slider').addEventListener('input', window.updateMetrics);
-                getEl('category-select').addEventListener('change', window.updateEntityList);
-                getEl('entity-select').addEventListener('change', window.updateMetrics);
-                getEl('crisis-select').addEventListener('change', window.updateMetrics);
+                var cs = getEl('category-select');
+                var es = getEl('entity-select');
+                var crs = getEl('crisis-select');
+                var cxs = getEl('capex-slider');
+
+                if (cs) cs.addEventListener('change', window.updateEntityList);
+                if (es) es.addEventListener('change', window.updateMetrics);
+                if (crs) crs.addEventListener('change', window.updateMetrics);
+                if (cxs) cxs.addEventListener('input', window.updateMetrics);
                 
                 window.updateEntityList();
             });
